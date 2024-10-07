@@ -1,0 +1,99 @@
+For macOS (using Homebrew):
+
+brew install bash grep jq openssl python3
+
+########################
+tf test steps 
+
+ arch -arm64 brew install openstackclient
+
+
+ export OS_AUTH_URL="https://aciord4.livewirecloud.com:5000/v3" 
+ export OS_PROJECT_NAME="k8test"    # export OS_PROJECT_ID="757b8777ba03415eaef66e1d8e11ca78"          
+ export OS_USERNAME="devopsguy"     
+ export OS_PASSWORD='u$oCP&cm*L51spw1LjGfH6J3y'
+ export OS_USER_DOMAIN_NAME="k8test"
+ export OS_PROJECT_DOMAIN_NAME="k8test" 
+ export OS_REGION_NAME="RegionOne"        
+ export OS_IDENTITY_API_VERSION=3
+ export OS_IMAGE_API_VERSION=2
+
+
+
+
+Now that the infrastructure is set up and RKE2 is installed on both nodes, you need to manually complete the cluster configuration. Here are the steps:
+
+SSH into the control plane node:
+Copyssh core@209.165.217.113 -i /Users/munnaali/Downloads/id_rsa
+
+Get the node token:
+Copysudo cat /var/lib/rancher/rke2/server/node-token
+
+SSH into the worker node:
+Copyssh core@209.165.217.71 -i /Users/munnaali/Downloads/id_rsa
+
+Create the RKE2 config file on the worker node:
+Copysudo mkdir -p /etc/rancher/rke2
+sudo vim /etc/rancher/rke2/config.yaml
+
+Add the following content to the config file (replace <NODE_TOKEN> and <CONTROL_PLANE_IP> with the actual values):
+yamlCopyserver: https://<CONTROL_PLANE_IP>:9345
+token: <NODE_TOKEN>
+
+Start the RKE2 agent service on the worker node:
+Copysudo systemctl start rke2-agent.service
+
+Back on the control plane node, you can check the status of your cluster:
+Copysudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
+
+
+This should show both your control plane and worker nodes.
+To use kubectl from your local machine:
+
+On the control plane node, copy the kubeconfig file:
+Copysudo cp /etc/rancher/rke2/rke2.yaml ~/kubeconfig
+sudo chown core:core ~/kubeconfig
+
+From your local machine, copy the kubeconfig file:
+Copyscp core@209.165.217.113:~/kubeconfig ./rke2.yaml
+
+Edit the rke2.yaml file and replace the server address with the load balancer IP:
+yamlCopyserver: https://192.168.1.65:6443
+
+Use the kubeconfig file:
+Copyexport KUBECONFIG=./rke2.yaml
+kubectl get nodes
+
+
+
+
+export KUBECONFIG=./kubeconfig.yaml
+kubectl get nodes
+
+
+Now, let's install kubectl manually. You can download the appropriate version for your system from the official Kubernetes release page. Here are the steps for common architectures:
+For Intel Macs (x86_64):
+Copycurl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+For M1/M2 Macs (arm64):
+Copycurl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl"
+
+Make the kubectl binary executable:
+Copychmod +x ./kubectl
+
+Move the binary to a location in your PATH:
+Copysudo mv ./kubectl /usr/local/bin/kubectl
+
+Verify the installation:
+Copykubectl version --client
+
+
+Now, try to use kubectl again:
+Copyexport KUBECONFIG=./kubeconfig.yaml
+kubectl get nodes
+If you still encounter issues, there might be a problem with the kubeconfig file or the cluster itself. Let's verify the contents of the kubeconfig file:
+Copycat kubeconfig.yaml
+Check if the server address in the kubeconfig file matches your load balancer's IP address. If not, you may need to manually edit this file.
+Also, ensure that your load balancer is correctly forwarding traffic to your control plane node. You can test this by trying to reach the Kubernetes API server directly:
+Copycurl -k https://<load_balancer_ip>:6443
+You should receive a response (likely a 403 Forbidden error, which is expected without proper authentication).
+If these steps don't resolve the issue, please provide the output of the commands above, and we can further diagnose the problem.
