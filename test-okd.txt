@@ -8,13 +8,13 @@ tf test steps
  arch -arm64 brew install openstackclient
 
 
- export OS_AUTH_URL="https://aciord4.livewirecloud.com:5000/v3" 
- export OS_PROJECT_NAME="k8test"    # export OS_PROJECT_ID="757b8777ba03415eaef66e1d8e11ca78"          
- export OS_USERNAME="devopsguy"     
- export OS_PASSWORD='u$oCP&cm*L51spw1LjGfH6J3y'
- export OS_USER_DOMAIN_NAME="k8test"
- export OS_PROJECT_DOMAIN_NAME="k8test" 
- export OS_REGION_NAME="RegionOne"        
+ export OS_AUTH_URL="
+ export OS_PROJECT_NAME=""    # export OS_PROJECT_ID="757b8777ba03415eaef66e1d8e11ca78"          
+ export OS_USERNAME=""     
+ export OS_PASSWORD=''
+ export OS_USER_DOMAIN_NAME=""
+ export OS_PROJECT_DOMAIN_NAME="" 
+ export OS_REGION_NAME=""        
  export OS_IDENTITY_API_VERSION=3
  export OS_IMAGE_API_VERSION=2
 
@@ -23,14 +23,8 @@ tf test steps
 
 Now that the infrastructure is set up and RKE2 is installed on both nodes, you need to manually complete the cluster configuration. Here are the steps:
 
-SSH into the control plane node:
-Copyssh core@209.165.217.113 -i /Users/munnaali/Downloads/id_rsa
-
-Get the node token:
+et the node token:
 Copysudo cat /var/lib/rancher/rke2/server/node-token
-
-SSH into the worker node:
-Copyssh core@209.165.217.71 -i /Users/munnaali/Downloads/id_rsa
 
 Create the RKE2 config file on the worker node:
 Copysudo mkdir -p /etc/rancher/rke2
@@ -54,11 +48,6 @@ On the control plane node, copy the kubeconfig file:
 Copysudo cp /etc/rancher/rke2/rke2.yaml ~/kubeconfig
 sudo chown core:core ~/kubeconfig
 
-From your local machine, copy the kubeconfig file:
-Copyscp core@209.165.217.113:~/kubeconfig ./rke2.yaml
-
-Edit the rke2.yaml file and replace the server address with the load balancer IP:
-yamlCopyserver: https://192.168.1.65:6443
 
 Use the kubeconfig file:
 Copyexport KUBECONFIG=./rke2.yaml
